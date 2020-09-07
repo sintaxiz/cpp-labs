@@ -16,6 +16,5 @@ int main(int argc, char *argv[]) {
     WordCounter wc;
     std::cout << wc.addFile(argv[1]);
     wc.writeCsv(argv[2]);
-
     return 0;
 }

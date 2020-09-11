@@ -12,7 +12,7 @@ public:
         wordCounter = 0;
     }
 
-    int addFile(const std::string &fileName); // распарсить файл и проинициализировать переменные
+    void addFile(const std::string &inputFileName); // распарсить файл и проинициализировать переменные
 
     void writeCsv(const std::string &outputFileName) const; // отсортировать и вывести с процентами
 

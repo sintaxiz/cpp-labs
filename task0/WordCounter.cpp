@@ -6,21 +6,26 @@
 #include <string>
 #include <list>
 
-int WordCounter::addFile(const std::string &fileName) {
+void WordCounter::addFile(const std::string &inputFileName) {
 
     std::fstream myStream;
-    myStream.open(fileName);
+    myStream.open(inputFileName);
 
     std::stringstream ss;
     ss << myStream.rdbuf();
-
     std::string word;
     while (ss >> word) {
         wordCounter++;
         wordMap[word]++;
     }
+}
 
-    return this->wordCounter;
+void writeLine(std::list<std::pair<int, std::string>> &items, std::ofstream &outputStream, int wordCounter) {
+    std::pair<int, std::string> item = items.back();
+    outputStream << item.second << ','
+                 << item.first << ','
+                 << ((double) item.first) / wordCounter * 100 << '%' << std::endl;
+    items.pop_back();
 }
 
 void WordCounter::writeCsv(const std::string &outputFileName) const {
@@ -35,11 +40,7 @@ void WordCounter::writeCsv(const std::string &outputFileName) const {
 
     std::ofstream outputStream(outputFileName);
     while (!(items.empty())) {
-        std::pair<int, std::string> item = items.back();
-        outputStream << item.second << ','
-                     << item.first << ','
-                     << ((double) item.first) / wordCounter * 100 << '%' << std::endl;
-        items.pop_back();
+        writeLine(items, outputStream, wordCounter);
     }
     outputStream.close();
 }

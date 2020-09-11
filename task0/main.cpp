@@ -3,11 +3,6 @@
 #include <iostream>
 #include <string>
 
-// wordCounter -- class
-// работа с файлами в С++?
-// ключ - значение (слово - количество)
-// using namespace - раскрывает видимость namespace
-
 int main(int argc, char *argv[]) {
      if (argc < 3) {
          std::cout << "No data" << std::endl;

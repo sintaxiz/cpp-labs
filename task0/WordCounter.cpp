@@ -6,6 +6,16 @@
 #include <string>
 #include <list>
 
+std::string parseWord(const std::string &word) {
+    std::string newWord;
+    for (char ch : word) {
+        if ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) {
+            newWord.push_back(ch);
+        }
+    }
+    return newWord;
+}
+
 void WordCounter::addFile(const std::string &inputFileName) {
 
     std::fstream myStream;
@@ -13,10 +23,14 @@ void WordCounter::addFile(const std::string &inputFileName) {
 
     std::stringstream ss;
     ss << myStream.rdbuf();
-    std::string word;
-    while (ss >> word) {
+    std::string rawWord;
+    while (ss >> rawWord) {
+        std::string newWord = parseWord(rawWord);
+        if (newWord.empty()) {
+            continue;
+        }
         wordCounter++;
-        wordMap[word]++;
+        wordMap[newWord]++;
     }
 }
 

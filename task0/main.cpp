@@ -1,11 +1,10 @@
 #include "WordCounter.h"
 
 #include <iostream>
-#include <string>
 
 int main(int argc, char *argv[]) {
      if (argc < 3) {
-         std::cout << "No data" << std::endl;
+         std::cout << "No data";
          return 0;
      }
     WordCounter wc;

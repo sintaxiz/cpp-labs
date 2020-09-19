@@ -5,6 +5,13 @@
 #include <iostream>
 #include <string>
 #include <list>
+#include <exception>
+
+class FileException : public std::exception {
+    const char *what() const throw() {
+        return "Can not open file";
+    }
+};
 
 std::string parseWord(const std::string &word) {
     std::string newWord;
@@ -18,13 +25,15 @@ std::string parseWord(const std::string &word) {
 
 void WordCounter::addFile(const std::string &inputFileName) {
 
-    std::fstream myStream;
-    myStream.open(inputFileName);
+    std::fstream input(inputFileName);
+    if (!input) {
+        throw FileException();
+    }
 
-    std::stringstream ss;
-    ss << myStream.rdbuf();
+    std::stringstream textStream;
+    textStream << input.rdbuf();
     std::string rawWord;
-    while (ss >> rawWord) {
+    while (textStream >> rawWord) {
         std::string newWord = parseWord(rawWord);
         if (newWord.empty()) {
             continue;
@@ -34,27 +43,29 @@ void WordCounter::addFile(const std::string &inputFileName) {
     }
 }
 
-void writeLine(std::list<std::pair<int, std::string>> &items, std::ofstream &outputStream, int wordCounter) {
-    std::pair<int, std::string> item = items.back();
+void writeLine(const std::pair<int, std::string> &item, std::ofstream &outputStream, int wordCounter) {
     outputStream << item.second << ','
                  << item.first << ','
                  << ((double) item.first) / wordCounter * 100 << '%' << std::endl;
-    items.pop_back();
 }
 
 void WordCounter::writeCsv(const std::string &outputFileName) const {
 
+    std::ofstream outputStream(outputFileName);
+    if (!outputStream) {
+        throw FileException();
+    }
+
     // Using list to sort Data
-    std::list<std::pair<int, std::string>> items;
+    std::list<std::pair<int, std::string>> wordList;
     // Filling & sorting list
     for (const auto &pair : wordMap) {
-        items.emplace_back(pair.second, pair.first);
+        wordList.emplace_back(pair.second, pair.first);
     }
-    items.sort();
+    wordList.sort();
 
-    std::ofstream outputStream(outputFileName);
-    while (!(items.empty())) {
-        writeLine(items, outputStream, wordCounter);
+    for (auto const &word : wordList) {
+        writeLine(word, outputStream, wordCounter);
     }
     outputStream.close();
 }

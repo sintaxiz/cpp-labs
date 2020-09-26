@@ -2,7 +2,7 @@
 #include "LinkedList.h"
 
 // Зацикленный LinkedList
-int main() {
+int main(int argc, char **argv) {
     std::cout << "Hello, World!" << std::endl;
 
     LinkedList<int> myList;
@@ -25,6 +25,9 @@ int main() {
     std::cout << myList.getSize() << std::endl;
     myList += anotherList;
     std::cout << myList.getSize();
-
+  /*  for (auto item : myList) {
+        std::cout << "item:" << item << std::endl;
+    }
+*/
     return 0;
 }

@@ -3,86 +3,55 @@
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
+#include <ostream>
+#include <memory>
 
+
+// Зацикленный двухсвязный список
 template<class value_type>
 class LinkedList {
+
 private:
-    struct Node {
-        Node *next = nullptr;
-        Node *previous = nullptr;
+    struct node {
+        node *next = nullptr;
+        node *previous = nullptr;
         value_type data = 0;
 
-        Node() = default;
-
-        explicit Node(value_type data, Node *previous = nullptr, Node *next = nullptr) :
+        node() = default;
+        explicit node(value_type data, node *previous = nullptr, node *next = nullptr) :
                 data(data), previous(previous), next(next) {}
-
-        //копируется только дата!!!
-        /* Node(const Node &node) :
-                 next(nullptr),
-                 previous(nullptr),
-                 data(node.data) {}
-
-         Node &operator=(const Node &other) {
-             if (*this != other) {
-                 next(nullptr);
-                 previous(nullptr);
-                 data(other.data);
-             }
-             return *this;
-         }*/
     };
 
-    Node *head;
-    Node *tail;
-    size_t size;
 
+    node *head;
+    node *tail;
+    size_t size;
 
 public:
 
     /* КОНСТРУКТОРЫ И ДЕСТРУКТОР */
 
     // 1. Конструктор по умолчанию
-    LinkedList() : size(0ull), head(nullptr), tail(nullptr) {}  // : Node() ... size() -- список инициализации
+    LinkedList() : size(0ull), head(nullptr), tail(nullptr) {}  // : node() ... size() -- список инициализации
 
     // 2. Конструктор копирования
     // создается автоматически, просто копирует блок памяти в новую выделенную
     // LinkedList(const LinkedList &other) = delete;
     LinkedList(const LinkedList &other) {
-
         head = nullptr;
         tail = nullptr;
         size = 0;
-        Node *otherNode = other.tail;
+        node *other_node = other.tail;
         for (size_t i = 0; i < other.size; ++i) {
-            value_type data = otherNode->data;
+            value_type data = other_node->data;
             push_front(data);
-            otherNode = otherNode->next;
+            other_node = other_node->next;
         }
-
-        /*head = other.head;
-        tail = other.tail;
-        Node *otherNode = other.tail;
-        Node *newNode = new Node(otherNode);
-        for (size_t i = 0; i < size; ++i) {
-            otherNode = otherNode->next;
-            newNode = new Node(otherNode);
-        }
-        //
-        head = new Node(other.head);
-        Node *tmp = other.head->next;
-        for (size_t i = 1ull; i < size; ++i) {
-            Node * newNode = new Node(tmp);
-
-        }*/
     }
 
     // 3. Move-конструктор, переносит состояние other в новый объект
     LinkedList(LinkedList &&other) noexcept {
-        size = 0;
-        for (int i = 0; i < other.size; ++i) {
-            push_front();
-        }
+        size = other.size;
         // .... забираем состояние объекта
 
         other.size = 0; //
@@ -98,6 +67,45 @@ public:
             pop_back();
         }
     }
+
+    // Оператор присваивания копированием (cope assignment)
+    LinkedList & operator=(const LinkedList & other) {
+        if (this == &other) {
+            return *this;
+        }
+
+        for (int j = 0; j < size; ++j) {
+            pop_front();
+        }
+
+        for (value_type &item : other) {
+            push_back(item);
+        }
+
+        return *this;
+    }
+
+    // Оператор присваивания перемещением (move assignment)
+    LinkedList & operator=(LinkedList && other) noexcept {
+        if(this == &other){
+            return *this;
+        }
+
+        for (int i = 0; i < size; ++i) {
+            pop_front();
+        }
+
+        size = other.size;
+        head = other.head;
+        tail = other.tail;
+
+        other.size = 0;
+        other.head = nullptr;
+        other.tail = nullptr;
+
+        return *this;
+    }
+
 
 
     // Селекторы -- помечаем метод const
@@ -121,7 +129,7 @@ public:
                 std::cout << "WTFFFF";
                 exit(666);
             }
-            Node *newNode = new Node(value);
+            node *newNode = new node(value);
             newNode->previous = newNode;
             newNode->next = newNode;
             head = newNode;
@@ -129,11 +137,10 @@ public:
             size++;
             return;
         }
-        Node *newNode = new Node(value, head, tail); // создаём новую ноду, которая связывается с head и tail
-        Node *oldBegin = head; // сохраняем прошлый front
+        node *newNode = new node(value, head, tail); // создаём новую ноду, которая связывается с head и tail
+        head->next = newNode;
         head = newNode;
 
-        oldBegin->next = head; // прошлый front теперь ссылается на новую ноду
         tail->previous = head; // прошлый tail точно также
 
         size++;
@@ -143,11 +150,33 @@ public:
 
     //Добавляет значение value в конец списка.
     void push_back(const value_type &value) {
+
+        if (head == nullptr) {
+            if (tail != nullptr) {
+                std::cout << "WTFFFF";
+                exit(666);
+            }
+            node *newNode = new node(value);
+            newNode->previous = newNode;
+            newNode->next = newNode;
+            head = newNode;
+            tail = newNode;
+            size++;
+            return;
+        }
+        node *new_back = new node(value, head, tail); // создаём новую ноду, которая связывается с head и tail
+        node *old_back = tail; // сохраняем прошлый back
+        tail = new_back;
+
+        old_back->previous = tail; // прошлый front теперь ссылается на новую ноду
+        head->next = tail; // прошлый tail точно также
+
+        size++;
     }
 
     //Удаляет последний элемент списка.
     void pop_back() {
-        Node *newEnd = tail->next;
+        node *newEnd = tail->next;
         newEnd->previous = tail;
         head->next = newEnd;
         delete tail;
@@ -157,7 +186,7 @@ public:
 
     //Удаляет первый элемент списка.
     void pop_front() {
-        Node *newBegin = head->previous;
+        node *newBegin = head->previous;
         newBegin->next = tail;
         tail->next = newBegin;
         delete head;
@@ -176,57 +205,57 @@ public:
         other.tail->previous = head;
         head->next = other.head;
         tail->previous = other.head;
+        return *this;
     }
 
 
     // Bidirectional iterator
-    template<class ValueType>
     class iterator {
-        Node *current;
+        node *curr_ptr;
     public:
-        explicit iterator(Node *current) : current(current) {};
+        explicit iterator(node *current) : curr_ptr(current) {};
 
         iterator &operator=(const iterator &other) {
             if (this == other) {
                 return *this;
             }
-            current = other.current;
+            curr_ptr = other.curr_ptr;
             return *this;
         }
 
         bool operator!=(const iterator &other) const {
-            return current != other.current;
+            return curr_ptr != other.curr_ptr;
         }
 
         bool operator==(const iterator &other) const {
-            return current == other.current;
+            return curr_ptr == other.curr_ptr;
         }
 
         //Возвращает ссылку на текущий элемент коллекции.
         value_type &operator*() {
-            return current->data;
+            return curr_ptr->data;
         }
 
         //Возвращает указатель на текущий элемент коллекции.
         value_type *operator->() {
-            return &(current->data);
+            return &(curr_ptr->data);
         }
 
         // префиксный оператор
         iterator &operator++() {
-            current = current->next;
+            curr_ptr = curr_ptr->previous;
             return *this;
         }
 
         // постфиксный оператор
         iterator operator++(int) {
             iterator old = *this;
-            ++old;
+            ++(*this);
             return old;
         }
 
         iterator &operator--() {
-            current = current->previous;
+            curr_ptr = curr_ptr->next;
             return *this;
         }
 
@@ -239,15 +268,68 @@ public:
     };
 
     class const_iterator {
+        node *curr_ptr;
+    public:
+        explicit const_iterator(node *current) : curr_ptr(current) {};
+
+        const_iterator &operator=(const const_iterator &other) {
+            if (this == other) {
+                return *this;
+            }
+            curr_ptr = other.curr_ptr;
+            return *this;
+        }
+
+        bool operator!=(const const_iterator &other) const {
+            return curr_ptr != other.curr_ptr;
+        }
+
+        bool operator==(const const_iterator &other) const {
+            return curr_ptr == other.curr_ptr;
+        }
+
+        //Возвращает ссылку на текущий элемент коллекции.
+        const value_type &operator*() {
+            return curr_ptr->data;
+        }
+
+        //Возвращает указатель на текущий элемент коллекции.
+        const value_type *operator->() {
+            return &(curr_ptr->data);
+        }
+
+        // префиксный оператор
+        const_iterator &operator++() {
+            curr_ptr = curr_ptr->previous;
+            return *this;
+        }
+
+        // постфиксный оператор
+        const_iterator operator++(int) {
+            iterator old = *this;
+            ++(*this);
+            return old;
+        }
+
+        const_iterator &operator--() {
+            curr_ptr = curr_ptr->next;
+            return *this;
+        }
+
+        const_iterator operator--(int) {
+            iterator old = *this;
+            --this;
+            return old;
+        }
 
     };
 
-    iterator<class ValueType> begin() {
-        return iterator<ValueType>(head);
+    iterator begin() {
+        return iterator(head);
     }
 
-    iterator<class ValueType> end() {
-        return iterator<ValueType>(head);
+    iterator end() {
+        return iterator(tail);
     }
 
 
@@ -268,8 +350,26 @@ public:
         }
     }
     //Возвращает ссылку на последний элемент списка.
-    value_type & back();
-    const value_type & back() const;
+    value_type & back(){
+        if (this->isEmpty()) {
+            return 0;
+        } else {
+            return tail->data;
+        }
+    }
+    const value_type & back() const {
+        if (this->isEmpty()) {
+            return 0;
+        } else {
+            return tail->data;
+        }
+    }
 
 
+    friend std::ostream& operator<<(std::ostream& os, LinkedList& list) {
+        for (LinkedList<int>::iterator it = list.begin(); it != list.end(); it++) {
+             os << *it << " ";
+        }
+        return os;
+    }
 };

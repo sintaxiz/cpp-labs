@@ -1,33 +1,23 @@
 #include <iostream>
+#include <algorithm>
 #include "LinkedList.h"
-
-// Зацикленный LinkedList
 int main(int argc, char **argv) {
-    std::cout << "Hello, World!" << std::endl;
-
-    LinkedList<int> myList;
-    std::cout << myList.getSize() << std::endl;
-    myList.push_front(10);
-    std::cout << myList.getSize() << std::endl;
-    myList.push_back(100);
-
-    std::cout << myList.getSize() << std::endl;
-
-    std::cout << myList.getSize() << std::endl;
-    myList.push_front(1000);
-    std::cout << myList.getSize() << std::endl;
-
-    LinkedList<int> anotherList;
-    anotherList.push_front(1000);
-    anotherList.push_front(1000);
-
-
-    std::cout << myList.getSize() << std::endl;
-    myList += anotherList;
-    std::cout << myList.getSize();
-  /*  for (auto item : myList) {
-        std::cout << "item:" << item << std::endl;
+    LinkedList<int> list1;
+    for (int i = 1; i <= 100; ++i) {
+        list1.push_front(i);
     }
-*/
+
+    auto itt = std::find_if(list1.begin(), list1.end(), [](int i){ return ((i%2) == 1);});
+    std::cout << "The first odd value is " << *itt << '\n';
+    LinkedList<int> list2;
+    for (int i = 1; i <= 100; ++i) {
+        list2.push_front(i);
+    }
+
+    std::cout << list1 << std::endl;
+    std::cout << list1.getSize() << std::endl;
+    std::cout << list2 << std::endl;
+    std::cout << list2.getSize() << std::endl;
+
     return 0;
 }

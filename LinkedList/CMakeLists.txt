@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
-project(task1)
+project(LinkedList)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main.cpp LinkedListException.cpp LinkedListException.h)
+set(SOURCE_FILES main.cpp)
 add_executable(list_run ${SOURCE_FILES})
 
 add_subdirectory(Google_tests)

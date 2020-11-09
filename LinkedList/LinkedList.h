@@ -9,18 +9,19 @@
 #include <memory>
 
 
-// Зацикленный двухсвязный список
-template<class value_type>
+// Looped doubly connected List
+template<class T>
 class LinkedList {
 
 private:
     struct node {
         node *next = nullptr;
         node *previous = nullptr;
-        value_type data = 0;
+        T data = 0;
 
         node() = default;
-        explicit node(value_type data, node *previous = nullptr, node *next = nullptr) :
+
+        explicit node(T data, node *previous = nullptr, node *next = nullptr) :
                 data(data), previous(previous), next(next) {}
     };
     node *head;
@@ -31,61 +32,61 @@ public:
     /* Constructors & destructors */
 
     // 1. Default constructor
-    LinkedList() : size(0ull), head(nullptr) {}
+    LinkedList() : size(0ull), head(nullptr) {} // just an empty list
 
-    //TODO:
     // 2. Copy constructor
-    // создается автоматически, просто копирует блок памяти в новую выделенную
+    // Allocate new memory and copy data from other
     LinkedList(const LinkedList &other) {
         head = nullptr;
         size = 0;
-        for (auto it = other.cbegin(); it != other.cend(); it++) {
-            push_back(*it);
+        auto it = other.end();
+        for (size_t i = 0; i < other.getSize(); --it, i++) {
+            pushFront(*it);
         }
-        push_back(*(other.cend()));
     }
 
     // 3. Move constructor
     LinkedList(LinkedList &&other) noexcept {
+        // take state
         size = other.size;
         head = other.head;
 
+        // and make other object invalid
         other.size = 0;
         other.head = nullptr;
     }
 
-    // Destructor (only one)
+    // Destructor
     ~LinkedList() {
         if (!isEmpty()) {
             clear();
         }
     }
 
-    // Copy assignment
-    LinkedList & operator=(const LinkedList & other) {
+    // 1. Copy assignment
+    LinkedList &operator=(const LinkedList &other) {
         if (this == &other) {
             return *this;
         }
-        // Clear our list (if size > 1)
-        ~(*this); // TODO: can i do it that way?
-        for (int j = 0; j < size; ++j) {
-            pop_front();
+        if (!isEmpty()) {
+            clear();
         }
         // Copy data
-        for (value_type &item : other) {
-            push_back(item);
+        constIterator it = other.end();
+        for (size_t i = 0; i < other.size; --it, i++) {
+            pushFront(*it);
         }
         return *this;
     }
 
-    // Move assignment
-    LinkedList & operator=(LinkedList && other) noexcept {
-        if(this == &other){
+    // 2. Move assignment
+    LinkedList &operator=(LinkedList &&other) noexcept {
+        if (this == &other) {
             return *this;
         }
         // Firstly clear list if there any data
-        for (int i = 0; i < size; ++i) {
-            pop_front();
+        if (!isEmpty()) {
+            clear();
         }
         // Then take data from "other"
         size = other.size;
@@ -101,58 +102,72 @@ public:
     int getSize() const {
         return size;
     }
+
     bool isEmpty() const {
         return (size == 0 || head == nullptr);
     }
 
     // Bidirectional iterator
     class iterator {
-        friend class LinkedList<value_type>; // for access to node pointer
+        friend class LinkedList<T>; // for access to node pointer
 
-        node *curr_ptr;
+        node *currPtr;
     public:
-        explicit iterator(node *current) : curr_ptr(current) {};
 
+        // Default constructor
+        iterator(node *current) : currPtr(current) {};
+
+        // Copy constructor
+        iterator(iterator const &other) {
+            currPtr = other.currPtr;
+        }
+
+        // Copy assigment operator
         iterator &operator=(const iterator &other) {
-            if (this != other) {
-                return *this;
-            }
-            curr_ptr = other.curr_ptr;
+             if ((*this) == other) {
+                 return *this;
+             }
+            currPtr = other.currPtr;
             return *this;
         }
 
         bool operator!=(const iterator &other) const {
-            return curr_ptr != other.curr_ptr;
+            return currPtr != other.currPtr;
         }
+
         bool operator==(const iterator &other) const {
-            return curr_ptr == other.curr_ptr;
+            return currPtr == other.currPtr;
         }
 
         // Return reference on current element of collection
-        value_type &operator*() {
-            return curr_ptr->data;
+        T &operator*() {
+            return currPtr->data;
         }
+
         //Return pointer on current element of collection
-        value_type *operator->() {
-            return &(curr_ptr->data);
+        T *operator->() {
+            return &(currPtr->data);
         }
 
         // ++, --: Return iterator that points on next/previous element
         // Prefix operator
         iterator &operator++() {
-            curr_ptr = curr_ptr->next;
+            currPtr = currPtr->next;
             return *this;
         }
+
         // Postfix operator
         iterator operator++(int) {
             iterator old = *this;
             ++(*this);
             return old;
         }
+
         iterator &operator--() {
-            curr_ptr = curr_ptr->previous;
+            currPtr = currPtr->previous;
             return *this;
         }
+
         iterator operator--(int) {
             iterator old = *this;
             --(*this);
@@ -161,49 +176,58 @@ public:
 
     };
 
-    class const_iterator {
-        node *curr_ptr;
+    class constIterator {
+        node *currPtr;
     public:
-        explicit const_iterator(node *current) : curr_ptr(current) {};
+        explicit constIterator(node *current) : currPtr(current) {};
 
-        const_iterator &operator=(const const_iterator &other) {
+        constIterator(constIterator const &other) {
+            currPtr = other.currPtr;
+        }
+
+        constIterator &operator=(const constIterator &other) {
             if (this == other) {
                 return *this;
             }
-            curr_ptr = other.curr_ptr;
+            currPtr = other.currPtr;
             return *this;
         }
 
-        bool operator!=(const const_iterator &other) const {
-            return curr_ptr != other.curr_ptr;
-        }
-        bool operator==(const const_iterator &other) const {
-            return curr_ptr == other.curr_ptr;
+        bool operator!=(const constIterator &other) const {
+            return currPtr != other.currPtr;
         }
 
-        const value_type &operator*() {
-            return curr_ptr->data;
-        }
-        const value_type *operator->() {
-            return &(curr_ptr->data);
+        bool operator==(const constIterator &other) const {
+            return currPtr == other.currPtr;
         }
 
-        const_iterator &operator++() {
-            curr_ptr = curr_ptr->next;
+        const T &operator*() {
+            return currPtr->data;
+        }
+
+        const T *operator->() {
+            return &(currPtr->data);
+        }
+
+        constIterator &operator++() {
+            currPtr = currPtr->next;
             return *this;
         }
-        const_iterator operator++(int) {
-            const_iterator old = *this;
+
+        constIterator operator++(int) {
+            constIterator old = *this;
             ++(*this);
             return old;
         }
-        const_iterator &operator--() {
-            curr_ptr = curr_ptr->previous;
+
+        constIterator &operator--() {
+            currPtr = currPtr->previous;
             return *this;
         }
-        const_iterator operator--(int) {
-            const_iterator old = *this;
-            --this;
+
+        constIterator operator--(int) {
+            constIterator old = *this;
+            --(*this);
             return old;
         }
     };
@@ -211,130 +235,210 @@ public:
     iterator begin() {
         return iterator(head);
     }
-    const_iterator begin() const {
-        return const_iterator(head);
-    }
-
     iterator end() {
-        return iterator(head->previous);
-    }
-    const_iterator end() const {
-        return const_iterator(head->previous);
+        return isEmpty() ? iterator(nullptr) : iterator(head->previous);
     }
 
-    const_iterator cbegin() const {
-        return const_iterator(head->previous);
+    constIterator begin() const {
+        return constIterator(head);
     }
-    const_iterator cend() const {
-        return const_iterator(head->next);
+    constIterator end() const {
+        return isEmpty() ? constIterator(nullptr) : constIterator(head->previous);
+    }
+
+    constIterator cbegin() const {
+        return constIterator(head);
+    }
+
+    constIterator cend() const {
+        return constIterator(head->previous);
     }
 
     /* Access to elements of collection */
     // Get a (const) reference to first element of collection
-    value_type & front() {
-        if(isEmpty()) {
-            return 0; // TODO: make exception
+    T &front() {
+        if (isEmpty()) {
+            throw LinkedListException::EmptyException();
         } else {
             return head->data;
         }
     }
-    const value_type & front() const {
-        if(this->isEmpty()) {
-            return 0; // TODO: make exception
+
+    const T &front() const {
+        if (this->isEmpty()) {
+            throw LinkedListException::EmptyException();
         } else {
             return head->data;
         }
     }
+
     // Get a (const) reference to last element of collection
-    value_type & back(){
+    T &back() {
         if (this->isEmpty()) {
-            return 0; // TODO: make exception
+            throw LinkedListException::EmptyException();
         } else {
-            return head->next->data;
+            return head->previous->data;
         }
     }
-    const value_type & back() const {
+
+    const T &back() const {
         if (this->isEmpty()) {
-            return 0; // TODO: make exception
+            throw LinkedListException::EmptyException();
         } else {
-            return head->next->data;
+            return head->previous->data;
         }
     }
 
     // Modifiers
+    // Delete element on position from list
     iterator erase(iterator position) {
-        if (isEmpty()){}; // TODO: exception?
-        position.curr_ptr->next = position.curr_ptr->previous;
-        position.curr_ptr->previous = position.curr_ptr->next;
-        iterator next = iterator(position.curr_ptr->next);
-        delete position.curr_ptr;
+        if (isEmpty()) {
+            throw LinkedListException::EmptyException();
+        };
+
+        node *nextNode = position.currPtr->next;
+        node *prevNode = position.currPtr->previous;
+        prevNode->next = nextNode;
+        nextNode->previous = prevNode;
+
+        iterator next = iterator(nextNode);
+
+        if (position.currPtr == head) {
+            head = nextNode;
+        }
+        delete position.currPtr;
+        size--;
         return next;
     }
 
+    // Erase in some range (including end)
     iterator erase(iterator begin, iterator end) {
-        if (isEmpty()){}; // TODO: exception?
-        while (begin != end) {
-            begin = erase(begin); // TODO: check work
+        if (isEmpty()) {
+            throw LinkedListException::EmptyException();
+        };
+        iterator it = begin;
+        while(it != end) {
+            it = erase(it);
         }
-        return end;
+        return erase(it); // delete last element
     }
 
-    void remove(const value_type &value) {
-        if (isEmpty()){
+    // Delete all elements with data == value
+    void remove(const T &value) {
+        if (isEmpty()) {
             return;
         }
-        for (auto it = begin();it != end(); it++) {
-            if((*it) == value) {
+        for (auto it = begin(); it != end(); it++) {
+            if ((*it) == value) {
                 it = erase(it);
             }
         }
     }
 
     void clear() {
-        erase(begin(), end());
+        if (isEmpty()) {
+            throw LinkedListException::EmptyException();
+        }
+        iterator current = begin();
+        while (current != end()) {
+            current = erase(current);
+        }
+        delete head; // delete last node
+        size = 0;
     }
 
-    void pop_back() {
-        head->previous = erase(end()).curr_ptr;
-    }
-    void pop_front() {
-        head = erase(front()).curr_ptr;
+
+    // Delete last element
+    void popBack() {
+        head->previous = erase(end()).currPtr;
     }
 
-    iterator insert(iterator before, const value_type & value) {
-        node *newNode = new node(value, before.curr_ptr->previous, before.curr_ptr)
-        before.curr_ptr->previous = newNode;
-        before.curr_ptr->previous->next = newNode;
+    // Delete first element (head)
+    void popFront() {
+        head = erase(begin()).currPtr;
+    }
+
+    // Insert last element
+    void pushBack(const T &value) {
+        insert(++end(), value);
+    }
+
+    // Insert first element (head)
+    void pushFront(const T &value) {
+        head = insert(begin(), value).currPtr;
+    }
+
+    // Insert some value before iteratore "before". If list is empty, creates new head.
+    iterator insert(iterator before, const T &value) {
+        node *newNode = new node(value);
+        if (isEmpty()) {
+            newNode->previous = newNode;
+            newNode->next = newNode;
+            head = newNode;
+        } else {
+            newNode->previous = before.currPtr->previous;
+            newNode->next = before.currPtr;
+            before.currPtr->previous->next = newNode;
+            before.currPtr->previous = newNode;
+        }
         size++;
         return iterator(newNode);
     }
 
-    void push_back(const value_type & value) {
-        insert(end(), value);
-    }
-    void push_front(const value_type & value) {
-        insert(begin(), value);
-    }
-
-    // Операторы внутренние
-    // Присоединяет other к списку.
+    // Appends other to this
     LinkedList &operator+=(const LinkedList &other) {
         if (other.isEmpty()) {
             return *this;
         }
-        size += other.size;
-        other.head->next = head->next;
-        other.head->next->previous = head;
-        head->next = other.head;
-        head->next->previous = other.head;
+        constIterator it = other.cbegin();
+        for (int i = 0; i < other.getSize(); ++i, ++it) {
+            pushBack(*it);
+        }
         return *this;
     }
 
-    // For writing list
-    friend std::ostream& operator<<(std::ostream& os, const LinkedList& list) {
+    /* External operators of equality: check if 2 lists are equal */
+    friend bool operator!=(const LinkedList & left, const LinkedList & right) {
+        return !(left == right);
+    }
+    friend bool operator==(const LinkedList & left, const LinkedList & right) {
+        if (left.isEmpty()) {
+            return right.isEmpty();
+        }
+        if (left.size != right.size) {
+            return false;
+        }
+        auto itLeft = left.begin();
+        auto itRight = left.begin();
+        while (itLeft != left.end()) {
+            if (*itLeft != *itRight) {
+                return false;
+            }
+            ++itLeft;
+            ++itRight;
+        }
+        if (*(left.end()) != *(right.end())) {
+            return false;
+        }
+        return true;
+    }
+
+    // For writing list to stream
+    friend std::ostream &operator<<(std::ostream &os, const LinkedList &list) {
         for (auto &item : list) {
             os << item << " ";
         }
         return os;
     }
+
+    // Concatenate 2 lists and return result
+    friend LinkedList operator+(const LinkedList & left, const LinkedList & right) {
+        LinkedList jointList;
+        jointList += left;
+        jointList += right;
+        return jointList;
+    }
 };
+
+
+

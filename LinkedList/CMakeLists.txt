@@ -3,8 +3,8 @@ project(LinkedList)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main.cpp)
-add_executable(list_run ${SOURCE_FILES})
+set(SOURCE_FILES main.cpp  LinkedListException.cpp)
+add_executable(run ${SOURCE_FILES})
 
 add_subdirectory(Google_tests)
 

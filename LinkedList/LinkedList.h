@@ -360,7 +360,11 @@ public:
 
     // Insert last element
     void pushBack(const T &value) {
-        insert(++end(), value);
+        if (isEmpty()) {
+            insert(iterator(nullptr), value);
+        } else {
+            insert(++end(), value);
+        }
     }
 
     // Insert first element (head)
@@ -368,7 +372,7 @@ public:
         head = insert(begin(), value).currPtr;
     }
 
-    // Insert some value before iteratore "before". If list is empty, creates new head.
+    // Insert some value before iterator "before". If list is empty, creates new head.
     iterator insert(iterator before, const T &value) {
         node *newNode = new node(value);
         if (isEmpty()) {

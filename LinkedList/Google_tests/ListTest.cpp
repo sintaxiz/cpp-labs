@@ -25,9 +25,8 @@ std::string listToString (const LinkedList<int> &list) {
         return "";
     }
     std::string listString;
-    auto it = list.begin();
-    for (int i = 0; i < list.getSize(); ++i, it++) {
-        listString += std::to_string((*it)) + " ";
+    for (auto item : list) {
+        listString += std::to_string(item) + " ";
     }
     listString.pop_back();
     return listString;
@@ -37,10 +36,10 @@ TEST_F(ListTest, insertTest) {
     integerList.insert(++integerList.begin(), magicNumbers[0]); // insert element after head
     EXPECT_EQ(*(++integerList.begin()), magicNumbers[0]);
 
-    integerList.insert(integerList.begin(), magicNumbers[1]); // insert element before head (to end)
-    EXPECT_EQ(*(integerList.end()), magicNumbers[1]);
+    integerList.insert(integerList.begin(), magicNumbers[1]); // insert element before head (to begin)
+    EXPECT_EQ(*(integerList.begin()), magicNumbers[1]);
 
-    EXPECT_EQ(listToString(integerList), "4 666 3 2 1 0 13");
+    EXPECT_EQ(listToString(integerList), "13 4 666 3 2 1 0");
 }
 
 TEST_F(ListTest, eraseTest) {
@@ -74,8 +73,8 @@ TEST_F(ListTest, clearTest) {
 
 TEST_F(ListTest, sizeTest){
     EXPECT_EQ(integerList.getSize(), 5);
-    integerList.erase(integerList.begin(), ++integerList.begin());
-    EXPECT_EQ(integerList.getSize(), 3);
+    integerList.erase(integerList.begin(), ++integerList.begin()); // Deleting 1 element
+    EXPECT_EQ(integerList.getSize(), 4);
 }
 
 TEST_F(ListTest, operatorEqualTest) {

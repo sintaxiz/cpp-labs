@@ -40,7 +40,7 @@ public:
 
     // 2. Copy constructor
     // Allocate new memory and copy data from other
-    LinkedList(const LinkedList &other) {
+    LinkedList(const LinkedList &other) : LinkedList() {
         for (auto &item : other) {
             pushBack(item);
         }
@@ -89,6 +89,7 @@ public:
         if (!isEmpty()) {
             clear();
         }
+        delete tail;
         // Then take data from "other"
         size = other.size;
         tail = other.head;
@@ -250,7 +251,7 @@ public:
     }
 
     constIterator cbegin() const {
-        return constIterator(tail->previous);
+        return constIterator(tail->next);
     }
 
     constIterator cend() const {
@@ -324,9 +325,13 @@ public:
         if (isEmpty()) {
             return;
         }
-        for (auto it = begin(); it != end(); it++) {
+        auto it = begin();
+        while (it != end()) {
             if ((*it) == value) {
                 it = erase(it);
+            }
+            else {
+                it++;
             }
         }
     }

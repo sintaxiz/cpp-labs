@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
     } else {
         skipLines = 0; // setting default value of skipped lines
     }
-    std::ifstream inputFile("test.csv");
+    std::ifstream inputFile("test.csv", std::ios::binary);
     if (!inputFile.is_open()){
         std::cout << "Can not open file!";
         return -1;

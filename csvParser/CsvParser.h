@@ -20,19 +20,20 @@ public:
         }
     };
 
-    CsvParser(std::ifstream &file, int skipLines, char delimiter = ',')
+    CsvParser(std::ifstream &file, int skipLines = 0, char delimiter = ',')
     : file(file), skipLines(skipLines), delimiter(delimiter) {
         // skip lines
         for (int i = 0; i < skipLines; ++i) {
             std::string emptyString;
             std::getline(file, emptyString);
         }
+        start = file.tellg();
     };
 
     class iterator {
     public:
-        iterator(bool isEOF, std::ifstream &fileStream, char delimiter)
-        : isEOF(isEOF), fileStream(fileStream), delimiter(delimiter) {
+        iterator(bool isEOF, std::ifstream &fileStream, char delimiter, int rowNumber, std::streampos pos)
+        : isEOF(isEOF), fileStream(fileStream), delimiter(delimiter), rowNumber(rowNumber), currPosition(pos) {
             pTuple = new std::tuple<Args...>;
             if (isEOF) {
                 return;
@@ -44,24 +45,32 @@ public:
             delete pTuple;
         }
 
-        void setDelimeter(std::istringstream &stringStream) {
+        void setDelimiter(std::istringstream &stringStream) {
             std::locale loc(std::locale::classic(), new my_ctype(delimiter));
             stringStream.imbue(loc);
         }
 
         void readTuple() {
-            if (fileStream.eof()) {
+            if (currPosition == EOF) {
                 isEOF = true;
-                fileStream.clear();
-                fileStream.seekg(0);
                 return;
             }
+            fileStream.clear();
+            fileStream.seekg(currPosition);
             std::string currLine;
             std::getline(fileStream, currLine);
-            std::istringstream stringStream(currLine);
-            setDelimeter(stringStream);
-            stringStream >> *pTuple;
+            currPosition = fileStream.tellg();
 
+            std::istringstream stringStream(currLine);
+            setDelimiter(stringStream);
+            try {
+                TupleReader<sizeof...(Args) - 1, Args...>::read(stringStream, *pTuple, rowNumber);
+            } catch (CsvParserException &exception) {
+                std::cerr << exception.what()<< ", line " << exception.getRow() << std::endl;
+                throw std::invalid_argument("");
+            }
+
+            rowNumber++;
         }
 
         iterator &operator++() {
@@ -71,18 +80,18 @@ public:
 
         iterator operator++(int) {
             iterator old = *this;
-            readTuple();
+            (*this)++;
             return old;
         }
 
         bool operator==(const iterator &other) const {
+            if (isEOF && other.isEOF) {
+                return true;
+            }
             return (*pTuple == *other.pTuple);
         }
 
         bool operator!=(const iterator &other) const {
-            if (isEOF) {
-                return false;
-            }
             return !(*this == other);
         }
 
@@ -95,21 +104,24 @@ public:
         std::ifstream &fileStream;
         bool isEOF;
         char delimiter;
+        size_t rowNumber;
+        std::streampos currPosition;
     };
 
     // methods for iterating
     iterator begin() {
-        return iterator(false, file, delimiter);
+        return iterator(false, file, delimiter, 1, start);
     }
 
     iterator end() {
-        return iterator(true, file, delimiter);
+        return iterator(true, file, delimiter, 0, EOF);
     }
 
 private:
     int skipLines;
     std::ifstream &file;
     char delimiter;
+    std::streampos start;
 
 };
 

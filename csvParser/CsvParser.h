@@ -9,18 +9,18 @@
 template<class ...Args>
 class CsvParser {
 public:
-    class my_ctype : public std::ctype<char> {
-        mask my_table[table_size];
+    class csvFacet : public std::ctype<char> {
+        mask csvTable[table_size]{};
     public:
-        my_ctype(char delimiter, size_t refs = 0)
-                : std::ctype<char>(&my_table[0], false, refs) {
-            std::copy_n(classic_table(), table_size, my_table);
-            my_table[delimiter] = (mask) space;
-            my_table[' '] = lower;
+        explicit csvFacet(char delimiter, size_t refs = 0)
+                : std::ctype<char>(&csvTable[0], false, refs) {
+            std::copy_n(classic_table(), table_size, csvTable);
+            csvTable[delimiter] = (mask) space;
+            csvTable[' '] = lower;
         }
     };
 
-    CsvParser(std::ifstream &file, int skipLines = 0, char delimiter = ',')
+    explicit CsvParser(std::ifstream &file, int skipLines = 0, char delimiter = ',')
     : file(file), skipLines(skipLines), delimiter(delimiter) {
         // skip lines
         for (int i = 0; i < skipLines; ++i) {
@@ -46,7 +46,7 @@ public:
         }
 
         void setDelimiter(std::istringstream &stringStream) {
-            std::locale loc(std::locale::classic(), new my_ctype(delimiter));
+            std::locale loc(std::locale::classic(), new csvFacet(delimiter));
             stringStream.imbue(loc);
         }
 
@@ -66,8 +66,8 @@ public:
             try {
                 TupleReader<sizeof...(Args) - 1, Args...>::read(stringStream, *pTuple, rowNumber);
             } catch (CsvParserException &exception) {
-                std::cerr << exception.what()<< ", line " << exception.getRow() << std::endl;
-                throw std::invalid_argument("");
+                std::cerr << exception.what() << ", line " << exception.getRowToPrint() <<
+                ", column " << exception.getColumnToPrint() << std::endl;
             }
 
             rowNumber++;
@@ -110,7 +110,7 @@ public:
 
     // methods for iterating
     iterator begin() {
-        return iterator(false, file, delimiter, 1, start);
+        return iterator(false, file, delimiter, 1 + skipLines, start);
     }
 
     iterator end() {
@@ -122,7 +122,6 @@ private:
     std::ifstream &file;
     char delimiter;
     std::streampos start;
-
 };
 
 
